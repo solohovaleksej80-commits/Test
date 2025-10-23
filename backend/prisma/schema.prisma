@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Пользователь (аутентификация)
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  password        String
+  telegramId      String?        @unique @map("telegram_id")
+  telegramUsername String?       @map("telegram_username")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  profile         PlayerProfile?
+  referralsGiven  Referral[]     @relation("Referrer")
+  referralsReceived Referral[]   @relation("Referee")
+
+  @@map("users")
+}
+
+// Профиль игрока
+model PlayerProfile {
+  id              String    @id @default(uuid())
+  userId          String    @unique @map("user_id")
+  level           Int       @default(1)
+  experience      Int       @default(0)
+  tokens          Int       @default(500) // начальный баланс
+  farmWidth       Int       @default(5) @map("farm_width")
+  farmHeight      Int       @default(5) @map("farm_height")
+  lastLogin       DateTime  @default(now()) @map("last_login")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipment       PlayerEquipment[]
+  quests          PlayerQuest[]
+  transactions    Transaction[]
+
+  @@map("player_profiles")
+}
+
+// Шаблоны оборудования (базовая конфигурация)
+model EquipmentTemplate {
+  id              String   @id @default(uuid())
+  name            String
+  description     String
+  category        String   // "production", "decoration", "storage"
+  rarity          String   // "common", "rare", "epic", "legendary"
+  price           Int      // стоимость в токенах
+  width           Int      // ширина в клетках
+  height          Int      // высота в клетках
+  productionRate  Int      @default(0) @map("production_rate") // токенов в час
+  storageCapacity Int      @default(0) @map("storage_capacity") // максимум хранилища
+  requiredLevel   Int      @default(1) @map("required_level") // минимальный уровень игрока
+  imageUrl        String?  @map("image_url")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  playerEquipment PlayerEquipment[]
+
+  @@map("equipment_templates")
+}
+
+// Оборудование на ферме игрока
+model PlayerEquipment {
+  id                String             @id @default(uuid())
+  profileId         String             @map("profile_id")
+  templateId        String             @map("template_id")
+  positionX         Int                @map("position_x")
+  positionY         Int                @map("position_y")
+  level             Int                @default(1)
+  currentStorage    Int                @default(0) @map("current_storage") // накопленные ресурсы
+  lastCollectedAt   DateTime           @default(now()) @map("last_collected_at")
+  placedAt          DateTime           @default(now()) @map("placed_at")
+
+  profile           PlayerProfile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  template          EquipmentTemplate  @relation(fields: [templateId], references: [id])
+
+  @@map("player_equipment")
+  @@index([profileId])
+}
+
+// Задания
+model Quest {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  type            String   // "tutorial", "daily", "weekly", "achievement"
+  requirement     String   // JSON строка с условиями выполнения
+  rewardTokens    Int      @map("reward_tokens")
+  rewardEquipment String?  @map("reward_equipment") // ID шаблона оборудования (опционально)
+  requiredLevel   Int      @default(1) @map("required_level")
+  order           Int      @default(0) // порядок отображения
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  playerQuests    PlayerQuest[]
+
+  @@map("quests")
+}
+
+// Прогресс выполнения заданий игрока
+model PlayerQuest {
+  id              String   @id @default(uuid())
+  profileId       String   @map("profile_id")
+  questId         String   @map("quest_id")
+  progress        String   // JSON строка с прогрессом
+  isCompleted     Boolean  @default(false) @map("is_completed")
+  isClaimed       Boolean  @default(false) @map("is_claimed") // получена ли награда
+  startedAt       DateTime @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  claimedAt       DateTime? @map("claimed_at")
+
+  profile         PlayerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  quest           Quest         @relation(fields: [questId], references: [id])
+
+  @@unique([profileId, questId])
+  @@map("player_quests")
+  @@index([profileId])
+}
+
+// Реферальная система
+model Referral {
+  id              String   @id @default(uuid())
+  referrerId      String   @map("referrer_id") // кто пригласил
+  refereeId       String   @map("referee_id")  // кого пригласили
+  rewardClaimed   Boolean  @default(false) @map("reward_claimed")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  referrer        User     @relation("Referrer", fields: [referrerId], references: [id])
+  referee         User     @relation("Referee", fields: [refereeId], references: [id])
+
+  @@unique([referrerId, refereeId])
+  @@map("referrals")
+  @@index([referrerId])
+}
+
+// История транзакций токенов
+model Transaction {
+  id              String   @id @default(uuid())
+  profileId       String   @map("profile_id")
+  type            String   // "earn", "spend"
+  source          String   // "quest", "production", "referral", "shop", "initial"
+  amount          Int
+  balanceBefore   Int      @map("balance_before")
+  balanceAfter    Int      @map("balance_after")
+  description     String?
+  metadata        String?  // JSON для дополнительных данных
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  profile         PlayerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+  @@index([profileId])
+  @@index([createdAt])
+}

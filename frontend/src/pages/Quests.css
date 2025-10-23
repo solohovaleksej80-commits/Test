@@ -1,0 +1,121 @@
+.quests-page {
+  padding: 16px;
+  padding-bottom: 80px;
+  min-height: calc(100vh - 60px);
+}
+
+.quests-header {
+  margin-bottom: 20px;
+}
+
+.quests-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.quests-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.quest-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: none;
+  background: var(--card-background);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.tab.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.quests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quest-card {
+  background: var(--card-background);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.quest-card.completed {
+  opacity: 0.7;
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.quest-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.quest-reward {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-color);
+  background: var(--background-color);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.quest-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.quest-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.quest-status {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+.quest-status.in-progress {
+  color: var(--warning-color);
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.quest-status.claimed {
+  color: var(--success-color);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.no-quests {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
