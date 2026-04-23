@@ -14,6 +14,7 @@ export interface AssetBalance {
   balance: bigint
   address?: string // contract address for ERC-20
   priceId?: string // coingeckoId
+  logo?: string // PNG logo URL for the asset itself
 }
 
 async function fetchNativeBalance(
@@ -22,7 +23,14 @@ async function fetchNativeBalance(
   chain: ChainKey,
 ): Promise<AssetBalance> {
   const info = CHAINS[chain]
-  const bal = await provider.getBalance(address)
+  let bal: bigint
+  try {
+    bal = await provider.getBalance(address)
+  } catch {
+    // RPC failures: still return a zero-balance entry so the UI shows the
+    // chain's native asset and the user can retry later.
+    bal = 0n
+  }
   return {
     chain,
     kind: 'native',
@@ -31,6 +39,7 @@ async function fetchNativeBalance(
     decimals: info.nativeDecimals,
     balance: bal,
     priceId: info.coingeckoId,
+    logo: info.logo,
   }
 }
 
@@ -38,23 +47,26 @@ async function fetchErc20Balance(
   provider: JsonRpcProvider,
   address: string,
   token: TokenInfo,
-): Promise<AssetBalance | null> {
+): Promise<AssetBalance> {
+  let bal: bigint = 0n
   try {
     const contract = new Contract(token.address, ERC20_ABI, provider)
-    const bal: bigint = await contract.balanceOf(address)
-    return {
-      chain: token.chain,
-      kind: 'erc20',
-      token,
-      symbol: token.symbol,
-      name: token.name,
-      decimals: token.decimals,
-      balance: bal,
-      address: token.address,
-      priceId: token.coingeckoId,
-    }
+    bal = await contract.balanceOf(address)
   } catch {
-    return null
+    // Swallow per-token RPC errors: keep the asset visible with zero balance
+    // so the top-10 / watchlist still displays on flaky public RPCs.
+  }
+  return {
+    chain: token.chain,
+    kind: 'erc20',
+    token,
+    symbol: token.symbol,
+    name: token.name,
+    decimals: token.decimals,
+    balance: bal,
+    address: token.address,
+    priceId: token.coingeckoId,
+    logo: token.logo,
   }
 }
 
@@ -67,7 +79,7 @@ export async function fetchPortfolio(
     enabledChains.includes(tk.chain),
   )
 
-  const tasks: Promise<AssetBalance | null>[] = []
+  const tasks: Promise<AssetBalance>[] = []
   for (const chain of enabledChains) {
     const provider = getProvider(chain)
     tasks.push(fetchNativeBalance(provider, address, chain))
@@ -78,7 +90,7 @@ export async function fetchPortfolio(
   const results = await Promise.allSettled(tasks)
   const out: AssetBalance[] = []
   for (const r of results) {
-    if (r.status === 'fulfilled' && r.value) out.push(r.value)
+    if (r.status === 'fulfilled') out.push(r.value)
   }
   return out
 }

@@ -158,7 +158,7 @@ function AssetPicker({
       >
         {value ? (
           <>
-            <TokenBadge symbol={value.symbol} chain={value.chain} size={28} />
+            <TokenBadge symbol={value.symbol} chain={value.chain} size={28} logo={value.logo} />
             <span className="text-sm font-medium">{value.symbol}</span>
           </>
         ) : (
@@ -179,7 +179,7 @@ function AssetPicker({
                 setOpen(false)
               }}
             >
-              <TokenBadge symbol={a.symbol} chain={a.chain} size={30} />
+              <TokenBadge symbol={a.symbol} chain={a.chain} size={30} logo={a.logo} />
               <div className="flex-1">
                 <div className="text-sm">{a.symbol}</div>
                 <div className="tnum text-[11px] text-[var(--color-muted)]">

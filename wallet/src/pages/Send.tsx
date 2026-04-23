@@ -206,7 +206,7 @@ export function Send() {
                         : 'border-[var(--color-line)]'
                     }`}
                   >
-                    <TokenBadge symbol={c.symbol} chain={c.chain} size={34} />
+                    <TokenBadge symbol={c.symbol} chain={c.chain} size={34} logo={c.logo} />
                     <div>
                       <div className="text-sm font-medium">{c.symbol}</div>
                       <div className="tnum text-[11px] text-[var(--color-muted)]">
@@ -277,7 +277,7 @@ export function Send() {
                 {locale === 'ru' ? 'Отправляете' : 'Sending'}
               </span>
               <div className="flex items-center gap-2">
-                <TokenBadge symbol={asset.symbol} chain={asset.chain} size={28} />
+                <TokenBadge symbol={asset.symbol} chain={asset.chain} size={28} logo={asset.logo} />
                 <span className="tnum font-display text-2xl">
                   {amount} {asset.symbol}
                 </span>

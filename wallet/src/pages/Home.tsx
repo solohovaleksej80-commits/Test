@@ -18,7 +18,17 @@ export function Home() {
 
   const { assets, totalUsd, changePct, loading, reload } = usePortfolio()
 
-  const visibleAssets = assets.filter((a) => a.humanBalance > 0 || a.kind === 'native')
+  // Split assets: anything with balance OR a native coin of an enabled chain = funded.
+  // All other (zero-balance ERC-20s) = watchlist, dedup by symbol (top-10 preview).
+  const fundedAssets = assets.filter((a) => a.humanBalance > 0 || a.kind === 'native')
+  const watchlistAll = assets.filter((a) => a.humanBalance === 0 && a.kind === 'erc20')
+  const watchlist: typeof watchlistAll = []
+  const seen = new Set<string>()
+  for (const a of watchlistAll) {
+    if (seen.has(a.symbol)) continue
+    seen.add(a.symbol)
+    watchlist.push(a)
+  }
 
   return (
     <Layout>
@@ -81,7 +91,7 @@ export function Home() {
       </section>
 
       {/* Allocation strip */}
-      {totalUsd > 0 ? <AllocationStrip assets={visibleAssets} total={totalUsd} /> : null}
+      {totalUsd > 0 ? <AllocationStrip assets={fundedAssets} total={totalUsd} /> : null}
 
       {/* Assets list */}
       <section className="mt-8">
@@ -89,18 +99,42 @@ export function Home() {
           title={t('home.assets', locale)}
           action={
             <span className="tnum text-xs text-[var(--color-muted)]">
-              {visibleAssets.length}
+              {fundedAssets.length}
             </span>
           }
         />
         <div className="flex flex-col gap-2">
-          {visibleAssets.length === 0 ? (
+          {fundedAssets.length === 0 ? (
             <Card className="text-center text-[var(--color-muted)]">{t('home.empty', locale)}</Card>
           ) : (
-            visibleAssets.map((a) => <AssetRow key={`${a.chain}-${a.kind}-${a.address ?? 'native'}`} a={a} hide={hide} />)
+            fundedAssets.map((a) => <AssetRow key={`${a.chain}-${a.kind}-${a.address ?? 'native'}`} a={a} hide={hide} />)
           )}
         </div>
       </section>
+
+      {/* Top-10 watchlist — tokens without balance, grouped by symbol */}
+      {watchlist.length ? (
+        <section className="mt-8">
+          <SectionHeader
+            title={locale === 'ru' ? 'Топ‑10 рынка' : 'Top‑10 market'}
+            action={
+              <span className="tnum text-xs text-[var(--color-muted)]">
+                {watchlist.length}
+              </span>
+            }
+          />
+          <div className="flex flex-col gap-2">
+            {watchlist.map((a) => (
+              <AssetRow
+                key={`watch-${a.symbol}-${a.chain}-${a.address ?? 'native'}`}
+                a={a}
+                hide={hide}
+                dim
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </Layout>
   )
 }
@@ -162,13 +196,16 @@ function AllocationStrip({ assets, total }: { assets: PricedAsset[]; total: numb
   )
 }
 
-function AssetRow({ a, hide }: { a: PricedAsset; hide: boolean }) {
+function AssetRow({ a, hide, dim }: { a: PricedAsset; hide: boolean; dim?: boolean }) {
   return (
     <Link
       to={`/asset/${a.chain}/${a.kind === 'native' ? 'native' : a.address}`}
-      className="press-scale flex items-center gap-3 rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 soft-shadow"
+      className={clsx(
+        'press-scale flex items-center gap-3 rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-3.5 soft-shadow',
+        dim && 'opacity-80',
+      )}
     >
-      <TokenBadge symbol={a.symbol} chain={a.chain} size={44} />
+      <TokenBadge symbol={a.symbol} chain={a.chain} size={44} logo={a.logo} />
       <div className="flex flex-1 items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">

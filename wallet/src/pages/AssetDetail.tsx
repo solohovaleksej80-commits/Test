@@ -70,7 +70,7 @@ export function AssetDetail() {
       </div>
 
       <div className="flex items-center gap-3">
-        <TokenBadge symbol={asset.symbol} chain={chain} size={58} />
+        <TokenBadge symbol={asset.symbol} chain={chain} size={58} logo={asset.logo} />
         <div>
           <div className="font-display text-3xl leading-none">{asset.symbol}</div>
           <div className="text-sm text-[var(--color-muted)]">{asset.name}</div>

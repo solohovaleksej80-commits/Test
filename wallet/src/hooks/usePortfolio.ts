@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { formatUnits } from 'ethers'
 import { fetchPortfolio, type AssetBalance } from '../lib/balances'
 import { getPrices, type PriceEntry } from '../lib/prices'
+import { DEFAULT_TOKENS } from '../lib/tokens'
 import { useWalletStore } from '../store/useWalletStore'
 
 export interface PricedAsset extends AssetBalance {
@@ -9,6 +10,20 @@ export interface PricedAsset extends AssetBalance {
   change24h?: number
   valueUsd: number // 0 if unknown
   humanBalance: number // Number(formatUnits(balance, decimals))
+  rank?: number
+}
+
+function rankOf(a: AssetBalance): number {
+  if (a.kind === 'native') {
+    if (a.symbol === 'ETH') return 2
+    if (a.symbol === 'BNB') return 6
+    if (a.symbol === 'POL') return 14
+    return 99
+  }
+  const tk = DEFAULT_TOKENS.find(
+    (t) => t.chain === a.chain && t.address === (a.address || '').toLowerCase(),
+  )
+  return tk?.rank ?? 99
 }
 
 export function usePortfolio() {
@@ -41,12 +56,16 @@ export function usePortfolio() {
           change24h: p?.usd_24h_change,
           valueUsd: usd ? human * usd : 0,
           humanBalance: human,
+          rank: rankOf(b),
         }
       })
-      // Sort: highest USD value first, then non-zero balances, then rest
+      // Sort: highest USD value → non-zero balance → by market-cap rank → by symbol.
       priced.sort((a, b) => {
         if (b.valueUsd !== a.valueUsd) return b.valueUsd - a.valueUsd
         if (b.humanBalance !== a.humanBalance) return b.humanBalance - a.humanBalance
+        const ra = a.rank ?? 99
+        const rb = b.rank ?? 99
+        if (ra !== rb) return ra - rb
         return a.symbol.localeCompare(b.symbol)
       })
       setAssets(priced)

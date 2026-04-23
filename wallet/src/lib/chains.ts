@@ -15,11 +15,19 @@ export interface ChainInfo {
   tone: string
   // Emoji / short glyph for minimal illustration
   glyph: string
+  // TrustWallet assets CDN chain slug
+  twSlug: string
+  // Logo URL for the native token of this chain
+  logo: string
+  // Logo URL for the chain itself (usually same as native, kept explicit for clarity)
+  chainLogo: string
 }
 
 // Public, free RPC endpoints. No keys required.
 // These can be overridden later via VITE_* env vars.
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {}
+
+const TW = 'https://assets-cdn.trustwallet.com/blockchains'
 
 export const CHAINS: Record<ChainKey, ChainInfo> = {
   ethereum: {
@@ -35,6 +43,9 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     coingeckoId: 'ethereum',
     tone: '#6C8FA3',
     glyph: '◆',
+    twSlug: 'ethereum',
+    logo: `${TW}/ethereum/info/logo.png`,
+    chainLogo: `${TW}/ethereum/info/logo.png`,
   },
   polygon: {
     key: 'polygon',
@@ -49,6 +60,9 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     coingeckoId: 'matic-network',
     tone: '#6B4A6A',
     glyph: '✦',
+    twSlug: 'polygon',
+    logo: `${TW}/polygon/info/logo.png`,
+    chainLogo: `${TW}/polygon/info/logo.png`,
   },
   bsc: {
     key: 'bsc',
@@ -63,6 +77,9 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     coingeckoId: 'binancecoin',
     tone: '#C78A2A',
     glyph: '●',
+    twSlug: 'smartchain',
+    logo: `${TW}/smartchain/info/logo.png`,
+    chainLogo: `${TW}/smartchain/info/logo.png`,
   },
   arbitrum: {
     key: 'arbitrum',
@@ -77,6 +94,10 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     coingeckoId: 'ethereum',
     tone: '#4F7A8E',
     glyph: '◇',
+    twSlug: 'arbitrum',
+    // Arbitrum native is ETH, show ETH logo. Chain logo differs.
+    logo: `${TW}/ethereum/info/logo.png`,
+    chainLogo: `${TW}/arbitrum/info/logo.png`,
   },
   base: {
     key: 'base',
@@ -91,6 +112,9 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     coingeckoId: 'ethereum',
     tone: '#3C5A7D',
     glyph: '▲',
+    twSlug: 'base',
+    logo: `${TW}/ethereum/info/logo.png`,
+    chainLogo: `${TW}/base/info/logo.png`,
   },
   optimism: {
     key: 'optimism',
@@ -105,6 +129,9 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     coingeckoId: 'ethereum',
     tone: '#B0443A',
     glyph: '◉',
+    twSlug: 'optimism',
+    logo: `${TW}/ethereum/info/logo.png`,
+    chainLogo: `${TW}/optimism/info/logo.png`,
   },
 }
 
